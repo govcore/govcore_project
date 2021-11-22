@@ -7,7 +7,7 @@ Project template for [GovCore distribution](http://www.drupal.org/project/govcor
 
 ## Create a GovCore project with [Composer](https://getcomposer.org/download/):
 
-To install the most recent stable release of GovCore 9.0.x run this command:
+To install the most recent stable release of GovCore run this command:
 ```
-composer create-project govcore/govcore_project:^9.0.0 PROJECT_DIR_NAME --no-dev --no-interaction
+composer create-project govcore/govcore_project PROJECT_DIR_NAME --no-dev --no-interaction
 ```
