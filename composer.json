@@ -15,13 +15,38 @@
         "govcore": {
             "type": "vcs",
             "url": "https://github.com/govcore/govcore.git"
+        },
+        "govcore_api": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore_api.git"
+        },
+        "govcore_core": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore_core.git"
+        },
+        "govcore_layout": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore_layout.git"
+        },
+        "govcore_media": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore_media.git"
+        },
+        "govcore_workflow": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore_workflow.git"
+        },
+        "govcore_govtheme_claro": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govtheme_claro.git"
         }
     },
     "require": {
         "cweagans/composer-patches": "^1.6.0",
         "drupal/core-composer-scaffold": "*",
         "oomphinc/composer-installers-extender": "^1.1 || ^2",
-        "govcore/govcore": "^1.0"
+        "govcore/govcore": "1.0.7",
+        "govcore/govtheme_claro": "^1.0"
     },
     "require-dev": {
         "drush/drush": ">=9.7",

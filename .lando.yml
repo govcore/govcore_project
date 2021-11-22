@@ -1,38 +1,33 @@
 name: govcore
 recipe: drupal9
 config:
+  webroot: docroot
   php: '7.4'
   via: apache:2.4
   composer_version: '2.0.7'
-  webroot: docroot/
+  drush: ^10
   database: mysql:5.7.28
 services:
   appserver:
+    build:
+      - "composer global require drupal/coder dealerdirect/phpcodesniffer-composer-installer mglaman/drupal-check"
+      - 'export PATH="/var/www/.composer/vendor/bin"'
+      - "wget https://asm89.github.io/d/twig-lint.phar -P /var/www -O twig-lint.phar"
     xdebug: true
     config:
-      php: .lando/php.ini
+      php: .lando/.php.ini
     build_as_root:
-      - composer install
       - curl -sL https://deb.nodesource.com/setup_10.x | bash -
       - apt install -y nodejs
       - npm install --global gulp-cli
       - npm install gulp@^3.9.1 --save
-      - .lando/fix-htaccess.sh
-    run_as_root:
-      - "ln -s /app/vendor/acquia/blt/bin/blt /usr/bin/blt -n"
-      - "/usr/bin/blt blt:init:git-hooks -n"
-      - "apt-get update && apt install vim -y"
-      - "apt-get update && apt install nano -y"
-      - "apt-get update && apt install mlocate -y"
     run:
-      - cd $LANDO_MOUNT/docroot/themes/custom/govtheme_claro && npm install
-      #      IF ERROR: Error: Node Sass does not yet support your current environment: Linux 64-bit with Unsupported runtime (64), UNCOMMENT BELOW.
-      #      - cd $LANDO_MOUNT/docroot/themes/custom/cook_county && npm rebuild node-sass
-      - cd $LANDO_MOUNT/docroot/themes/custom/govtheme_claro && gulp compile
-    overrides:
-      environment:
-        DRUSH_OPTIONS_URI: "http://govcore.lndo.site"
-        PHP_IDE_CONFIG: "serverName=govcore.lndo.site"
+      - cd $LANDO_MOUNT/docroot/themes/contrib/govtheme_claro && npm install
+      - cd $LANDO_MOUNT/docroot/themes/contrib/govtheme_claro && gulp compile
+  overrides:
+    environment:
+      DRUSH_OPTIONS_URI: "http:/govcore.lndo.site"
+      PHP_IDE_CONFIG: "serverName=govcore.lndo.site"
   pma:
     type: phpmyadmin
     hosts:
@@ -43,9 +38,14 @@ services:
     core: drupal
     config:
       dir: solr/conf
-  database:
-    portforward: 3307
+  node:
+    type: node
+    build:
+      - "yarn install -y"
 tooling:
+  bash:
+    service: appserver
+    cmd: /bin/bash
   console:
     service: appserver
     cmd: "/app/vendor/bin/drupal --root=/app/docroot"
@@ -59,12 +59,6 @@ tooling:
     description: Disable xdebug for apache.
     cmd: "rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && /etc/init.d/apache2 reload"
     user: root
-  blt:
-    service: appserver
-    cmd: /usr/bin/blt
-  bash:
-    service: appserver
-    cmd: /bin/bash
   node:
     service: appserver
   gulp:
@@ -72,17 +66,31 @@ tooling:
     dir: /app/docroot/themes/custom/cook_county
   npm:
     service: appserver
-  update-local:
+  phpcs:
     service: appserver
-    cmd:
-      - composer install
-      - drush --include=docroot/modules/contrib/acsf/acsf_init acsf-init -y -n
-      - drush updb -y
-      - drush cim -y
-      - drush cim -y
-      - drush updb -y
-      - drush cr
-      - drush uli
+    cmd: "phpcs"
+    options:
+    description: Run phpcs for given folder or file.
+  drupal-check:
+    service: appserver
+    cmd: "drupal-check"
+    options:
+    description: Run drupal-check for given folder or file.
+  twig-lint:
+    service: appserver
+    cmd: "php /var/www/twig-lint.phar"
+    options:
+    description: Run twig-lint for given folder or file.
+  eslint:
+    service: node
+    cmd: "node ./node_modules/eslint/bin/eslint.js --config=.eslintrc.json"
+    options:
+    description: Run jshint for given folder or file.
+  stylelint:
+    service: node
+    cmd: "npx stylelint --config .stylelintrc.json"
+    options:
+    description: Run stylelint for given folder or file.
 proxy:
   appserver:
     - govcore.lndo.site
