@@ -12,15 +12,23 @@ services:
     config:
       php: .lando/php.ini
     build_as_root:
+      - composer install
       - curl -sL https://deb.nodesource.com/setup_10.x | bash -
       - apt install -y nodejs
       - npm install --global gulp-cli
       - npm install gulp@^3.9.1 --save
       - .lando/fix-htaccess.sh
     run_as_root:
+      - "ln -s /app/vendor/acquia/blt/bin/blt /usr/bin/blt -n"
+      - "/usr/bin/blt blt:init:git-hooks -n"
       - "apt-get update && apt install vim -y"
       - "apt-get update && apt install nano -y"
       - "apt-get update && apt install mlocate -y"
+    run:
+      - cd $LANDO_MOUNT/docroot/themes/custom/govtheme_claro && npm install
+      #      IF ERROR: Error: Node Sass does not yet support your current environment: Linux 64-bit with Unsupported runtime (64), UNCOMMENT BELOW.
+      #      - cd $LANDO_MOUNT/docroot/themes/custom/cook_county && npm rebuild node-sass
+      - cd $LANDO_MOUNT/docroot/themes/custom/govtheme_claro && gulp compile
     overrides:
       environment:
         DRUSH_OPTIONS_URI: "http://govcore.lndo.site"
@@ -51,17 +59,24 @@ tooling:
     description: Disable xdebug for apache.
     cmd: "rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && /etc/init.d/apache2 reload"
     user: root
+  blt:
+    service: appserver
+    cmd: /usr/bin/blt
   bash:
     service: appserver
     cmd: /bin/bash
   node:
     service: appserver
+  gulp:
+    service: appserver
+    dir: /app/docroot/themes/custom/cook_county
   npm:
     service: appserver
   update-local:
     service: appserver
     cmd:
-      - composer install --prefer-dist
+      - composer install
+      - drush --include=docroot/modules/contrib/acsf/acsf_init acsf-init -y -n
       - drush updb -y
       - drush cim -y
       - drush cim -y

@@ -3,8 +3,22 @@
     "type": "project",
     "description": "Project template for Drupal 9 sites built with the Govcore distribution.",
     "license": "GPL-2.0-or-later",
+    "repositories": {
+        "drupal": {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        },
+        "assets": {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        },
+        "govcore": {
+            "type": "vcs",
+            "url": "https://github.com/govcore/govcore.git"
+        }
+    },
     "require": {
-        "govcore/govcore": "^1.0",
+        "govcore/govcore": "1.0.3",
         "cweagans/composer-patches": "^1.6.0",
         "drupal/core-composer-scaffold": "*",
         "oomphinc/composer-installers-extender": "^1.1 || ^2"
@@ -54,27 +68,9 @@
             "drupal/core": "-p2"
         }
     },
-    "repositories": {
-        "drupal": {
-            "type": "composer",
-            "url": "https://packages.drupal.org/8"
-        },
-        "assets": {
-            "type": "composer",
-            "url": "https://asset-packagist.org"
-        },
-        "govcore": {
-            "type": "vcs",
-            "url": "https://github.com/govcore/govcore.git"
-        }
-    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
         "post-create-project-cmd": "rm -r -f .travis.yml .travis-ci",
-        "quick-start": [
-            "composer install",
-            "php docroot/core/scripts/drupal quick-start govcore --no-interaction"
-        ]
     }
 }
