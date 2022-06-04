@@ -1,43 +1,56 @@
 name: govcore
 recipe: drupal9
 config:
-  webroot: docroot
   php: '7.4'
   via: apache:2.4
-  composer_version: '2.0.7'
-  drush: ^10
+  composer_version: '2.0.12'
+  webroot: docroot/
   database: mysql:5.7.28
+  keys:
+    - id_rsa
+    - acquia_key
 services:
   appserver:
-    build:
-      - "composer global require drupal/coder dealerdirect/phpcodesniffer-composer-installer mglaman/drupal-check"
-      - 'export PATH="/var/www/.composer/vendor/bin"'
-      - "wget https://asm89.github.io/d/twig-lint.phar -P /var/www -O twig-lint.phar"
     xdebug: true
     config:
-      php: .lando/.php.ini
+      php: .lando/config/php/php.ini
+      apache: .lando/config/server/apache.conf
     build_as_root:
-      - curl -sL https://deb.nodesource.com/setup_10.x | bash -
-      - apt install -y nodejs
+      - curl -sL https://deb.nodesource.com/setup_14.x | bash -
+      - apt install nodejs python2.7 vim -y
       - npm install --global gulp-cli
-      - npm install gulp@^3.9.1 --save
+      - npm install gulp@^4.0.2 --save
+    run_as_root:
+      - "ln -s /app/vendor/acquia/blt/bin/blt /usr/bin/blt -n -v"
+      - "ln -s /usr/bin/node /usr/local/bin/node -n -v"
+      - "ln -s /usr/bin/npm /usr/local/bin/npm -n -v"
+      - "ln -s /usr/bin/gulp /usr/local/bin/gulp -n -v"
+      - "ln -s /usr/bin/python2.7 /usr/local/bin/python -n -v"
+      - "/usr/bin/blt blt:init:git-hooks -n"
     run:
-      - cd $LANDO_MOUNT/docroot/themes/contrib/govtheme_claro && npm install
-      - cd $LANDO_MOUNT/docroot/themes/contrib/govtheme_claro && gulp compile
-  overrides:
-    environment:
-      DRUSH_OPTIONS_URI: "http:/govcore.lndo.site"
-      PHP_IDE_CONFIG: "serverName=govcore.lndo.site"
+      - cd $LANDO_MOUNT/docroot/themes/contrib/govcore_theme
+      - gulp compile
+    overrides:
+      environment:
+        DRUSH_OPTIONS_URI: "http://govcore-project.lndo.site"
+        PHP_IDE_CONFIG: "serverName=govcore-project.lndo.site"
+        XDEBUG_SESSION_START: lando
+        PHP_SENDMAIL_PATH: '/usr/local/bin/mhsendmail -S mailhog:1025'
   pma:
     type: phpmyadmin
     hosts:
       - database
+  mailhog:
+    type: mailhog
+    hogfrom:
+      - appserver
+    portforward: 1025    -
   search:
     type: solr:7
     portforward: 8983
     core: drupal
     config:
-      dir: solr/conf
+      dir: .lando/config/solr/conf
   node:
     type: node
     build:
@@ -46,8 +59,13 @@ tooling:
   bash:
     service: appserver
     cmd: /bin/bash
+    user: root
+  mysql:
+    service: database
+    cmd: mysql -u root
   console:
     service: appserver
+    description: run drupal console
     cmd: "/app/vendor/bin/drupal --root=/app/docroot"
   xdebug-on:
     service: appserver
@@ -59,11 +77,20 @@ tooling:
     description: Disable xdebug for apache.
     cmd: "rm /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini && /etc/init.d/apache2 reload"
     user: root
+  ssh-fix:
+    service: appserver
+    description: Fix ssh auth sock permission for MacOS users. Lando rebuild fixes the problem as well.
+    cmd: "/bin/chgrp www-data /run/host-services/ssh-auth.sock && /bin/chmod g+w /run/host-services/ssh-auth.sock"
+    user: root
   node:
     service: appserver
   gulp:
     service: appserver
-    dir: /app/docroot/themes/custom/cook_county
+  compile:
+    service: appserver
+    cmd:
+      - cd /app/docroot/themes/contrib/govcore_theme
+      - gulp compile
   npm:
     service: appserver
   phpcs:
@@ -93,8 +120,10 @@ tooling:
     description: Run stylelint for given folder or file.
 proxy:
   appserver:
-    - govcore.lndo.site
+    - govcore-project.lndo.site
   search:
-    - search.govcore.lndo.site:8983
+    - search.govcore-project.lndo.site:8983
   pma:
-    - pma.govcore.lndo.site
+    - pma.govcore-project.lndo.site
+  mailhog:
+    - mail.govcore-project.lndo.site
